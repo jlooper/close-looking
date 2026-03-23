@@ -1,0 +1,55 @@
+---
+interface Props {
+  headline?: string;
+  credit?: string;
+  index: number;
+}
+
+const { headline, credit, index } = Astro.props;
+---
+
+<div class="step-block" data-step-index={index}>
+  {headline && <h2 class="step-block__headline">{headline}</h2>}
+  <div class="step-block__body">
+    <slot />
+  </div>
+  {credit && <p class="step-block__credit">{credit}</p>}
+</div>
+
+<style>
+  .step-block {
+    background: var(--color-card);
+    color: var(--color-text);
+    padding: var(--space-m);
+    margin-bottom: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .step-block:last-child {
+    margin-bottom: var(--space-l);
+  }
+
+  .step-block__headline {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: var(--space-xs);
+    color: var(--color-text);
+  }
+
+  .step-block__body {
+    font-size: 1.125rem;
+    line-height: 1.7;
+  }
+
+  .step-block__credit {
+    margin-top: var(--space-xs);
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+</style>

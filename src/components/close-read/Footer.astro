@@ -1,0 +1,48 @@
+---
+interface Props {
+  credit?: string;
+  creditUrl?: string;
+}
+
+const { credit, creditUrl } = Astro.props;
+---
+
+<footer class="close-read-footer">
+  {credit && (
+    <p class="close-read-footer__credit">
+      {creditUrl
+        ? <a href={creditUrl} target="_blank" rel="noopener noreferrer">{credit}</a>
+        : credit}
+    </p>
+  )}
+  <p class="close-read-footer__powered">
+    Images delivered by <a href="https://cloudinary.com" target="_blank" rel="noopener noreferrer">Cloudinary</a>.
+    Built with <a href="https://astro.build" target="_blank" rel="noopener noreferrer">Astro</a>.
+  </p>
+</footer>
+
+<style>
+  .close-read-footer {
+    border-top: 1px solid var(--color-rule);
+    max-width: var(--measure);
+    margin: var(--space-xl) auto var(--space-l);
+    padding: var(--space-m) var(--space-s) 0;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: #999;
+  }
+
+  .close-read-footer__credit {
+    margin-bottom: var(--space-xs);
+  }
+
+  .close-read-footer a {
+    color: #ccc;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .close-read-footer a:hover {
+    color: #fff;
+  }
+</style>

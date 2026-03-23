@@ -1,0 +1,56 @@
+---
+import { cloudinaryUrl, cloudinarySrcset, DEFAULT_SIZES, type TransformOptions } from '../../lib/cloudinary';
+
+interface Props {
+  publicId: string;
+  alt: string;
+  opts?: TransformOptions;
+  priority?: boolean;
+}
+
+const { publicId, alt, opts = {}, priority = false } = Astro.props;
+const src = cloudinaryUrl(publicId, { ...opts, width: 1440 });
+const srcset = cloudinarySrcset(publicId, opts);
+---
+
+<div class="sticky-media">
+  <img
+    src={src}
+    srcset={srcset}
+    sizes={DEFAULT_SIZES}
+    alt={alt}
+    loading={priority ? 'eager' : 'lazy'}
+    decoding={priority ? 'sync' : 'async'}
+    fetchpriority={priority ? 'high' : undefined}
+  />
+</div>
+
+<style>
+  .sticky-media {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #111;
+  }
+
+  .sticky-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    will-change: transform;
+    transition:
+      transform 1.4s cubic-bezier(0.25, 0.1, 0.25, 1),
+      transform-origin 1.4s cubic-bezier(0.25, 0.1, 0.25, 1),
+      opacity 0.5s ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sticky-media img {
+      transition: none;
+    }
+  }
+</style>

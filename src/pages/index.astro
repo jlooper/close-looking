@@ -1,0 +1,146 @@
+---
+import { getCollection } from 'astro:content';
+import CloseReadLayout from '../layouts/CloseReadLayout.astro';
+import { cloudinaryUrl } from '../lib/cloudinary';
+
+const entries = await getCollection('close-reads');
+---
+
+<CloseReadLayout title="Close Looking">
+  <main class="index">
+    <header class="index__header">
+      <h1 class="index__title">Close Looking</h1>
+      <p class="index__intro">Scroll-driven visual essays that invite you to look more carefully.</p>
+    </header>
+    {entries.map((entry) => (
+      <a class="index__entry" href={`/close-reads/${entry.id}`}>
+        <div class="index__text">
+          <h2 class="index__entry-title">{entry.data.title}</h2>
+          {entry.data.subtitle && <p class="index__subtitle">{entry.data.subtitle}</p>}
+          {entry.data.description && <p class="index__desc">{entry.data.description}</p>}
+          <span class="index__cta">Read the close look &rarr;</span>
+        </div>
+        <div class="index__media">
+          <img
+            src={cloudinaryUrl(entry.data.heroPublicId, { crop: 'fill', gravity: 'auto', width: 800, height: 900 })}
+            alt={entry.data.heroAlt}
+            loading="lazy"
+          />
+        </div>
+      </a>
+    ))}
+  </main>
+</CloseReadLayout>
+
+<style>
+  .index {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: var(--space-l) var(--space-m);
+  }
+
+  .index__header {
+    padding: var(--space-xl) 0 var(--space-l);
+    max-width: 36rem;
+  }
+
+  .index__title {
+    font-family: var(--font-serif);
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
+    margin-bottom: var(--space-xs);
+    color: #fff;
+  }
+
+  .index__intro {
+    font-size: 1.25rem;
+    color: #999;
+  }
+
+  .index__entry {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 0;
+    text-decoration: none;
+    color: var(--color-text);
+    min-height: 70vh;
+    margin-bottom: var(--space-m);
+  }
+
+  .index__text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--space-l) var(--space-m);
+    max-width: 32rem;
+    background: var(--color-card);
+    color: var(--color-text);
+  }
+
+  .index__entry-title {
+    font-family: var(--font-serif);
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: var(--space-xs);
+  }
+
+  .index__subtitle {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-s);
+  }
+
+  .index__desc {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    margin-bottom: var(--space-s);
+  }
+
+  .index__cta {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-accent);
+    margin-top: auto;
+    padding-top: var(--space-s);
+  }
+
+  .index__media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #111;
+  }
+
+  .index__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .index__entry:hover .index__media img {
+    transform: scale(1.03);
+  }
+
+  @media (max-width: 859px) {
+    .index__entry {
+      display: flex;
+      flex-direction: column-reverse;
+      min-height: auto;
+    }
+
+    .index__text {
+      padding: var(--space-m) 0;
+      max-width: 100%;
+    }
+
+    .index__media {
+      aspect-ratio: 4 / 3;
+    }
+  }
+</style>

@@ -1,0 +1,55 @@
+---
+interface Props {
+  /** Optional id for anchor links */
+  id?: string;
+}
+
+const { id } = Astro.props;
+---
+
+<section class="close-read-section" id={id}>
+  <div class="close-read-section__media">
+    <slot name="media" />
+  </div>
+  <div class="close-read-section__narrative">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .close-read-section {
+    position: relative;
+  }
+
+  .close-read-section__media {
+    position: relative;
+    z-index: 1;
+  }
+
+  .close-read-section__narrative {
+    position: relative;
+    z-index: 2;
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: var(--space-l) var(--space-s);
+  }
+
+  @media (min-width: 860px) {
+    .close-read-section {
+      display: grid;
+      grid-template-columns: 1fr minmax(20rem, 28rem);
+    }
+
+    .close-read-section__media {
+      grid-column: 1 / -1;
+      grid-row: 1;
+    }
+
+    .close-read-section__narrative {
+      grid-column: 2;
+      grid-row: 1;
+      align-self: start;
+      padding: var(--space-xl) var(--space-m);
+    }
+  }
+</style>

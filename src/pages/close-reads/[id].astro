@@ -1,0 +1,153 @@
+---
+import { getCollection } from 'astro:content';
+import CloseReadLayout from '../../layouts/CloseReadLayout.astro';
+import StickyMedia from '../../components/close-read/StickyMedia.astro';
+import StepBlock from '../../components/close-read/StepBlock.astro';
+import StepSync from '../../components/close-read/StepSync.astro';
+import Footer from '../../components/close-read/Footer.astro';
+import { cloudinaryUrl, type TransformOptions } from '../../lib/cloudinary';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('close-reads');
+  return entries.map((entry) => ({
+    params: { id: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const {
+  title, subtitle, description,
+  heroPublicId, heroAlt, heroCredit, heroCreditUrl,
+  heroZoom, heroFocusX, heroFocusY, heroDuration,
+  steps,
+} = entry.data;
+
+const stepViews = steps.map((step) => {
+  const opts: TransformOptions = {
+    crop: step.crop,
+    gravity: step.gravity,
+    width: step.width ?? 1440,
+    height: step.height,
+    aspect: step.aspect,
+    namedTransform: step.namedTransform,
+  };
+  return {
+    url: cloudinaryUrl(step.publicId, opts),
+    focusX: step.focusX,
+    focusY: step.focusY,
+    zoom: step.zoom,
+  };
+});
+---
+
+<CloseReadLayout title={title} description={description}>
+  <main class="close-read-main">
+    <StepSync
+      steps={stepViews}
+      initialView={{ focusX: heroFocusX, focusY: heroFocusY, zoom: heroZoom }}
+      style={`--hero-zoom:${heroZoom};--hero-focus-x:${heroFocusX}%;--hero-focus-y:${heroFocusY}%;--hero-duration:${heroDuration}s`}
+    >
+      <div class="steps-track">
+        <div class="steps-track__header">
+          <h1 class="steps-track__title">{title}</h1>
+          {subtitle && <p class="steps-track__subtitle">{subtitle}</p>}
+          {heroCredit && <p class="steps-track__credit">{heroCredit}</p>}
+        </div>
+        {steps.map((step, i) => (
+          <StepBlock headline={step.headline} credit={step.credit} index={i}>
+            <p>{step.body}</p>
+          </StepBlock>
+        ))}
+      </div>
+      <StickyMedia
+        publicId={heroPublicId}
+        alt={heroAlt}
+        priority={true}
+        opts={{
+          crop: 'fill',
+          gravity: 'auto',
+          width: 1920,
+        }}
+      />
+    </StepSync>
+  </main>
+
+  <Footer credit={heroCredit} creditUrl={heroCreditUrl} />
+</CloseReadLayout>
+
+<style>
+  .close-read-main {
+    position: relative;
+  }
+
+  .close-read-main :global(.step-sync) {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 0;
+  }
+
+  .close-read-main :global(.step-sync .sticky-media img) {
+    animation: hero-zoom var(--hero-duration, 8s) cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  }
+
+  @keyframes hero-zoom {
+    0% {
+      transform: scale(1);
+      transform-origin: 50% 50%;
+    }
+    100% {
+      transform: scale(var(--hero-zoom, 1));
+      transform-origin: var(--hero-focus-x, 50%) var(--hero-focus-y, 50%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .close-read-main :global(.step-sync .sticky-media img) {
+      animation: none;
+    }
+  }
+
+  .steps-track {
+    padding: var(--space-m) var(--space-m) var(--space-l);
+  }
+
+  .steps-track__header {
+    background: var(--color-card);
+    color: var(--color-text);
+    padding: var(--space-l) var(--space-m);
+    margin-bottom: 80vh;
+  }
+
+  .steps-track__title {
+    font-family: var(--font-serif);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: var(--space-xs);
+  }
+
+  .steps-track__subtitle {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 300;
+    color: var(--color-text-muted);
+  }
+
+  .steps-track__credit {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-top: var(--space-xs);
+  }
+
+  @media (max-width: 859px) {
+    .close-read-main :global(.step-sync) {
+      display: block;
+    }
+
+    .steps-track {
+      max-width: 100%;
+    }
+  }
+</style>
