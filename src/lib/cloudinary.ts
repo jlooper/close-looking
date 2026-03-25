@@ -16,20 +16,19 @@ export interface TransformOptions {
  */
 export function cloudinaryUrl(publicId: string, opts: TransformOptions = {}): string {
   if (opts.namedTransform) {
-    return `${BASE}/t_${opts.namedTransform}/e_sharpen/f_auto/q_auto:best/${publicId}`;
+    return `${BASE}/t_${opts.namedTransform}/f_auto/q_auto:best/${publicId}`;
   }
 
   const parts: string[] = [];
-  const crop = opts.crop ?? 'fill';
+  const crop = opts.crop ?? 'scale';
   const actionParts = [`c_${crop}`];
-  if (opts.gravity) actionParts.push(`g_${opts.gravity}`);
+  if (opts.gravity && crop !== 'scale') actionParts.push(`g_${opts.gravity}`);
   if (opts.width) actionParts.push(`w_${opts.width}`);
   if (opts.height) actionParts.push(`h_${opts.height}`);
   if (opts.aspect) actionParts.push(`ar_${opts.aspect}`);
   actionParts.sort();
   parts.push(actionParts.join(','));
 
-  parts.push('e_sharpen');
   parts.push('f_auto');
   parts.push('q_auto:best');
 

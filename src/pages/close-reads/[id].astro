@@ -23,22 +23,16 @@ const {
   steps,
 } = entry.data;
 
-const stepViews = steps.map((step) => {
-  const opts: TransformOptions = {
-    crop: step.crop,
-    gravity: step.gravity,
+const stepViews = steps.map((step) => ({
+  url: cloudinaryUrl(step.publicId, {
+    crop: 'scale',
     width: step.width ?? 1440,
-    height: step.height,
-    aspect: step.aspect,
     namedTransform: step.namedTransform,
-  };
-  return {
-    url: cloudinaryUrl(step.publicId, opts),
-    focusX: step.focusX,
-    focusY: step.focusY,
-    zoom: step.zoom,
-  };
-});
+  }),
+  focusX: step.focusX,
+  focusY: step.focusY,
+  zoom: step.zoom,
+}));
 ---
 
 <CloseReadLayout title={title} description={description}>
@@ -64,11 +58,8 @@ const stepViews = steps.map((step) => {
         publicId={heroPublicId}
         alt={heroAlt}
         priority={true}
-        opts={{
-          crop: 'fill',
-          gravity: 'auto',
-          width: 1920,
-        }}
+        zoomReady={true}
+        opts={{ crop: 'scale' }}
       />
     </StepSync>
   </main>

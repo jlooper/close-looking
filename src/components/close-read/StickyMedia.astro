@@ -6,18 +6,22 @@ interface Props {
   alt: string;
   opts?: TransformOptions;
   priority?: boolean;
+  /** Deliver a single high-res image for zoom/pan instead of responsive srcset. */
+  zoomReady?: boolean;
 }
 
-const { publicId, alt, opts = {}, priority = false } = Astro.props;
-const src = cloudinaryUrl(publicId, { ...opts, width: 1440 });
-const srcset = cloudinarySrcset(publicId, opts);
+const ZOOM_WIDTH = 4000;
+
+const { publicId, alt, opts = {}, priority = false, zoomReady = false } = Astro.props;
+const src = cloudinaryUrl(publicId, { ...opts, width: zoomReady ? ZOOM_WIDTH : 1440 });
+const srcset = zoomReady ? undefined : cloudinarySrcset(publicId, opts);
 ---
 
 <div class="sticky-media">
   <img
     src={src}
     srcset={srcset}
-    sizes={DEFAULT_SIZES}
+    sizes={srcset ? DEFAULT_SIZES : undefined}
     alt={alt}
     loading={priority ? 'eager' : 'lazy'}
     decoding={priority ? 'sync' : 'async'}
