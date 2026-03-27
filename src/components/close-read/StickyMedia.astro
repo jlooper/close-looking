@@ -10,7 +10,7 @@ interface Props {
   zoomReady?: boolean;
 }
 
-const ZOOM_WIDTH = 4000;
+const ZOOM_WIDTH = 2000;
 
 const { publicId, alt, opts = {}, priority = false, zoomReady = false } = Astro.props;
 const src = cloudinaryUrl(publicId, { ...opts, width: zoomReady ? ZOOM_WIDTH : 1440 });

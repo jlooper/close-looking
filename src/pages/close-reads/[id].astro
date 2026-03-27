@@ -1,11 +1,10 @@
 ---
 import { getCollection } from 'astro:content';
 import CloseReadLayout from '../../layouts/CloseReadLayout.astro';
-import StickyMedia from '../../components/close-read/StickyMedia.astro';
 import StepBlock from '../../components/close-read/StepBlock.astro';
 import StepSync from '../../components/close-read/StepSync.astro';
 import Footer from '../../components/close-read/Footer.astro';
-import { cloudinaryUrl, type TransformOptions } from '../../lib/cloudinary';
+import { cloudinaryUrl, cloudinaryCropUrl } from '../../lib/cloudinary';
 
 export async function getStaticPaths() {
   const entries = await getCollection('close-reads');
@@ -19,29 +18,31 @@ const { entry } = Astro.props;
 const {
   title, subtitle, description,
   heroPublicId, heroAlt, heroCredit, heroCreditUrl,
-  heroZoom, heroFocusX, heroFocusY, heroDuration,
+  heroSourceWidth, heroSourceHeight,
   steps,
 } = entry.data;
 
-const stepViews = steps.map((step) => ({
-  url: cloudinaryUrl(step.publicId, {
-    crop: 'scale',
-    width: step.width ?? 1440,
-    namedTransform: step.namedTransform,
-  }),
-  focusX: step.focusX,
-  focusY: step.focusY,
-  zoom: step.zoom,
-}));
+const CROP_DISPLAY_WIDTH = 1200;
+const baseUrl = cloudinaryUrl(heroPublicId, { crop: 'scale', width: 1200 });
+
+const stepViews = steps.map((step) => {
+  if (step.zoom <= 1) return baseUrl;
+
+  const centerX = heroSourceWidth * step.focusX / 100;
+  const centerY = heroSourceHeight * step.focusY / 100;
+  const cropH = heroSourceHeight / step.zoom;
+    const cropW = cropH * 1.33;
+
+  const url = cloudinaryCropUrl(step.publicId, {
+    centerX, centerY, width: cropW, height: cropH,
+  }, CROP_DISPLAY_WIDTH);
+  return url;
+});
 ---
 
 <CloseReadLayout title={title} description={description}>
   <main class="close-read-main">
-    <StepSync
-      steps={stepViews}
-      initialView={{ focusX: heroFocusX, focusY: heroFocusY, zoom: heroZoom }}
-      style={`--hero-zoom:${heroZoom};--hero-focus-x:${heroFocusX}%;--hero-focus-y:${heroFocusY}%;--hero-duration:${heroDuration}s`}
-    >
+    <StepSync>
       <div class="steps-track">
         <div class="steps-track__header">
           <h1 class="steps-track__title">{title}</h1>
@@ -54,13 +55,27 @@ const stepViews = steps.map((step) => ({
           </StepBlock>
         ))}
       </div>
-      <StickyMedia
-        publicId={heroPublicId}
-        alt={heroAlt}
-        priority={true}
-        zoomReady={true}
-        opts={{ crop: 'scale' }}
-      />
+      <div class="sticky-media">
+        <img
+          class="layer base"
+          src={baseUrl}
+          alt={heroAlt}
+          loading="eager"
+          decoding="sync"
+          fetchpriority="high"
+        />
+        {stepViews.map((url, i) => (
+          <img
+            class="layer step-layer"
+            data-step-layer={i}
+            data-is-full={steps[i].zoom <= 1 ? 'true' : undefined}
+            src={url}
+            alt={steps[i].alt}
+            loading={i < 3 ? 'eager' : 'lazy'}
+            decoding="async"
+          />
+        ))}
+      </div>
     </StepSync>
   </main>
 
@@ -78,24 +93,43 @@ const stepViews = steps.map((step) => ({
     gap: 0;
   }
 
-  .close-read-main :global(.step-sync .sticky-media img) {
-    animation: hero-zoom var(--hero-duration, 8s) cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  .sticky-media {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+    background: #111;
   }
 
-  @keyframes hero-zoom {
-    0% {
-      transform: scale(1);
-      transform-origin: 50% 50%;
-    }
-    100% {
-      transform: scale(var(--hero-zoom, 1));
-      transform-origin: var(--hero-focus-x, 50%) var(--hero-focus-y, 50%);
-    }
+  .layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .layer.base {
+    object-fit: contain;
+    opacity: 1;
+  }
+
+  .layer.step-layer {
+    object-fit: cover;
+  }
+
+  .layer.step-layer[data-is-full] {
+    object-fit: contain;
+  }
+
+  .layer.active {
+    opacity: 1;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .close-read-main :global(.step-sync .sticky-media img) {
-      animation: none;
+    .layer {
+      transition: none;
     }
   }
 

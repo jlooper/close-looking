@@ -33,6 +33,8 @@ const closeReads = defineCollection({
     heroFocusX: z.number().min(0).max(100).default(50),
     heroFocusY: z.number().min(0).max(100).default(50),
     heroDuration: z.number().min(0).default(8),
+    heroSourceWidth: z.number().positive(),
+    heroSourceHeight: z.number().positive(),
     steps: z.array(stepSchema).min(1),
   }),
 });

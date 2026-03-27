@@ -35,6 +35,31 @@ export function cloudinaryUrl(publicId: string, opts: TransformOptions = {}): st
   return `${BASE}/${parts.join('/')}/${publicId}`;
 }
 
+export interface CropRegion {
+  centerX: number;
+  centerY: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Build a Cloudinary URL that crops a region from the source, then scales to display width.
+ * Two chained actions: c_crop (extract region) → c_scale (fit to screen).
+ */
+export function cloudinaryCropUrl(
+  publicId: string,
+  crop: CropRegion,
+  displayWidth: number = 1200,
+): string {
+  const parts = [
+    `c_crop,g_xy_center,h_${Math.round(crop.height)},w_${Math.round(crop.width)},x_${Math.round(crop.centerX)},y_${Math.round(crop.centerY)}`,
+    `c_scale,w_${displayWidth}`,
+    'f_auto',
+    'q_auto:best',
+  ];
+  return `${BASE}/${parts.join('/')}/${publicId}`;
+}
+
 const BREAKPOINTS = [480, 768, 1024, 1440, 1920];
 
 /**
