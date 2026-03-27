@@ -1,52 +1,182 @@
 ---
+interface ViewData {
+  focusX: number;
+  focusY: number;
+  zoom: number;
+}
+
 interface Props {
+  views?: ViewData[];
   style?: string;
 }
 
-const { style } = Astro.props;
+const { views, style } = Astro.props;
 ---
 
 <div
   class="step-sync"
+  data-views={views ? JSON.stringify(views) : undefined}
   style={style}
 >
   <slot />
 </div>
 
 <script>
+  interface ViewData {
+    focusX: number;
+    focusY: number;
+    zoom: number;
+  }
+
+  function clamp(v: number, lo: number, hi: number): number {
+    return v < lo ? lo : v > hi ? hi : v;
+  }
+
+  const PAN_FACTOR = 0.4;
+  const MAX_PAN = 20;
+  const MAX_SCALE_DELTA = 0.15;
+  const OPACITY_BLEND_START = 0.45;
+  const OPACITY_BLEND_END = 0.55;
+
   function initStepSync() {
     document.querySelectorAll<HTMLDivElement>('.step-sync').forEach((container) => {
+      const views: ViewData[] = JSON.parse(container.dataset.views ?? '[]');
       const baseImg = container.querySelector<HTMLImageElement>('.layer.base');
       const stepLayers = container.querySelectorAll<HTMLImageElement>('.layer[data-step-layer]');
       const stepEls = container.querySelectorAll<HTMLElement>('[data-step-index]');
 
       if (!baseImg || stepLayers.length === 0 || stepEls.length === 0) return;
+      if (views.length !== stepLayers.length) return;
 
-      let activeLayer = -1;
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      function activateStep(index: number) {
-        if (index === activeLayer) return;
-        if (index < 0 || index >= stepLayers.length) return;
+      let curFrom = -1;
+      let curTo = -1;
+      let rafId = 0;
 
-        baseImg!.classList.remove('active');
-        stepLayers.forEach((layer) => layer.classList.remove('active'));
-        stepLayers[index].classList.add('active');
-
-        activeLayer = index;
+      function resetLayers() {
+        for (let i = 0; i < stepLayers.length; i++) {
+          stepLayers[i].style.transform = '';
+          stepLayers[i].style.opacity = '0';
+          stepLayers[i].style.willChange = '';
+        }
       }
 
-      const observer = new IntersectionObserver(
-        (entries) => {
-          for (const entry of entries) {
-            if (!entry.isIntersecting) continue;
-            const idx = Number((entry.target as HTMLElement).dataset.stepIndex);
-            activateStep(idx);
-          }
-        },
-        { rootMargin: '-30% 0px -30% 0px', threshold: 0 },
-      );
+      function applyPair(from: number, to: number, t: number) {
+        t = clamp(t, 0, 1);
+        from = clamp(from, 0, stepLayers.length - 1);
+        to = clamp(to, 0, stepLayers.length - 1);
 
-      stepEls.forEach((step) => observer.observe(step));
+        if (from !== curFrom || to !== curTo) {
+          resetLayers();
+          curFrom = from;
+          curTo = to;
+          stepLayers[from].style.willChange = 'transform, opacity';
+          if (from !== to) {
+            stepLayers[to].style.willChange = 'transform, opacity';
+          }
+        }
+
+        baseImg!.style.opacity = '0';
+
+        if (from === to) {
+          stepLayers[from].style.transform = '';
+          stepLayers[from].style.opacity = '1';
+          return;
+        }
+
+        const vFrom = views[from];
+        const vTo = views[to];
+        const dx = vTo.focusX - vFrom.focusX;
+        const dy = vTo.focusY - vFrom.focusY;
+        const zoomRatio = vTo.zoom / vFrom.zoom;
+
+        const outTx = clamp(-dx * PAN_FACTOR * t, -MAX_PAN, MAX_PAN);
+        const outTy = clamp(-dy * PAN_FACTOR * t, -MAX_PAN, MAX_PAN);
+        const outScaleDelta = clamp((zoomRatio - 1) * t, -MAX_SCALE_DELTA, MAX_SCALE_DELTA);
+        stepLayers[from].style.transform = `translate(${outTx}%, ${outTy}%) scale(${1 + outScaleDelta})`;
+        let mix = 0;
+        if (t <= OPACITY_BLEND_START) {
+          mix = 0;
+        } else if (t >= OPACITY_BLEND_END) {
+          mix = 1;
+        } else {
+          mix = (t - OPACITY_BLEND_START) / (OPACITY_BLEND_END - OPACITY_BLEND_START);
+        }
+        stepLayers[from].style.opacity = String(1 - mix);
+
+        const inTx = clamp(dx * PAN_FACTOR * (1 - t), -MAX_PAN, MAX_PAN);
+        const inTy = clamp(dy * PAN_FACTOR * (1 - t), -MAX_PAN, MAX_PAN);
+        const invRatio = zoomRatio !== 0 ? 1 / zoomRatio : 1;
+        const inScaleDelta = clamp((invRatio - 1) * (1 - t), -MAX_SCALE_DELTA, MAX_SCALE_DELTA);
+        stepLayers[to].style.transform = `translate(${inTx}%, ${inTy}%) scale(${1 + inScaleDelta})`;
+        stepLayers[to].style.opacity = String(mix);
+      }
+
+      function showBase() {
+        baseImg!.style.opacity = '1';
+        resetLayers();
+        curFrom = -1;
+        curTo = -1;
+      }
+
+      if (prefersReducedMotion) {
+        let activeIdx = -1;
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              const idx = Number((entry.target as HTMLElement).dataset.stepIndex);
+              if (idx === activeIdx) continue;
+              activeIdx = idx;
+              baseImg!.style.opacity = '0';
+              for (let i = 0; i < stepLayers.length; i++) {
+                stepLayers[i].style.opacity = i === idx ? '1' : '0';
+                stepLayers[i].style.transform = '';
+              }
+            }
+          },
+          { rootMargin: '-30% 0px -30% 0px', threshold: 0 },
+        );
+        stepEls.forEach((el) => observer.observe(el));
+        return;
+      }
+
+      function tick() {
+        const trigger = window.innerHeight * 0.5;
+        const len = stepEls.length;
+
+        const centers: number[] = new Array(len);
+        for (let i = 0; i < len; i++) {
+          const r = stepEls[i].getBoundingClientRect();
+          centers[i] = r.top + r.height * 0.5;
+        }
+
+        if (centers[0] > trigger) {
+          showBase();
+          rafId = requestAnimationFrame(tick);
+          return;
+        }
+
+        if (centers[len - 1] <= trigger) {
+          applyPair(len - 1, len - 1, 1);
+          rafId = requestAnimationFrame(tick);
+          return;
+        }
+
+        for (let i = 0; i < len - 1; i++) {
+          if (centers[i] <= trigger && centers[i + 1] > trigger) {
+            const span = centers[i + 1] - centers[i];
+            const t = span > 0 ? (trigger - centers[i]) / span : 0;
+            applyPair(i, i + 1, t);
+            break;
+          }
+        }
+
+        rafId = requestAnimationFrame(tick);
+      }
+
+      rafId = requestAnimationFrame(tick);
     });
   }
 

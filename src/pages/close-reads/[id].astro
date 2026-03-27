@@ -42,7 +42,7 @@ const stepViews = steps.map((step) => {
 
 <CloseReadLayout title={title} description={description}>
   <main class="close-read-main">
-    <StepSync>
+    <StepSync views={steps.map((s) => ({ focusX: s.focusX, focusY: s.focusY, zoom: s.zoom }))}>
       <div class="steps-track">
         <div class="steps-track__header">
           <h1 class="steps-track__title">{title}</h1>
@@ -68,7 +68,6 @@ const stepViews = steps.map((step) => {
           <img
             class="layer step-layer"
             data-step-layer={i}
-            data-is-full={steps[i].zoom <= 1 ? 'true' : undefined}
             src={url}
             alt={steps[i].alt}
             loading={i < 3 ? 'eager' : 'lazy'}
@@ -107,7 +106,7 @@ const stepViews = steps.map((step) => {
     width: 100%;
     height: 100%;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transform-origin: center center;
   }
 
   .layer.base {
@@ -117,20 +116,6 @@ const stepViews = steps.map((step) => {
 
   .layer.step-layer {
     object-fit: cover;
-  }
-
-  .layer.step-layer[data-is-full] {
-    object-fit: contain;
-  }
-
-  .layer.active {
-    opacity: 1;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .layer {
-      transition: none;
-    }
   }
 
   .steps-track {
@@ -146,7 +131,7 @@ const stepViews = steps.map((step) => {
 
   .steps-track__title {
     font-family: var(--font-serif);
-    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-size: clamp(2.4rem, 5.4vw, 4rem);
     font-weight: 700;
     line-height: 1.15;
     margin-bottom: var(--space-xs);
@@ -154,14 +139,14 @@ const stepViews = steps.map((step) => {
 
   .steps-track__subtitle {
     font-family: var(--font-serif);
-    font-size: 1.25rem;
+    font-size: clamp(1.35rem, 2vw, 1.7rem);
     font-weight: 300;
     color: var(--color-text-muted);
   }
 
   .steps-track__credit {
     font-family: var(--font-sans);
-    font-size: 0.75rem;
+    font-size: 0.95rem;
     color: var(--color-text-muted);
     margin-top: var(--space-xs);
   }
