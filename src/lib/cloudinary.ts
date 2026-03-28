@@ -16,7 +16,7 @@ export interface TransformOptions {
  */
 export function cloudinaryUrl(publicId: string, opts: TransformOptions = {}): string {
   if (opts.namedTransform) {
-    return `${BASE}/t_${opts.namedTransform}/f_auto/q_auto:best/${publicId}`;
+    return `${BASE}/t_${opts.namedTransform}/f_auto/q_auto/${publicId}`;
   }
 
   const parts: string[] = [];
@@ -30,7 +30,7 @@ export function cloudinaryUrl(publicId: string, opts: TransformOptions = {}): st
   parts.push(actionParts.join(','));
 
   parts.push('f_auto');
-  parts.push('q_auto:best');
+  parts.push('q_auto');
 
   return `${BASE}/${parts.join('/')}/${publicId}`;
 }

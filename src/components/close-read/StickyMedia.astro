@@ -1,5 +1,10 @@
 ---
-import { cloudinaryUrl, cloudinarySrcset, DEFAULT_SIZES, type TransformOptions } from '../../lib/cloudinary';
+import {
+  cloudinaryUrl,
+  cloudinarySrcset,
+  DEFAULT_SIZES,
+  type TransformOptions,
+} from "../../lib/cloudinary";
 
 interface Props {
   publicId: string;
@@ -10,10 +15,19 @@ interface Props {
   zoomReady?: boolean;
 }
 
-const ZOOM_WIDTH = 4000;
+const ZOOM_WIDTH = 2000;
 
-const { publicId, alt, opts = {}, priority = false, zoomReady = false } = Astro.props;
-const src = cloudinaryUrl(publicId, { ...opts, width: zoomReady ? ZOOM_WIDTH : 1440 });
+const {
+  publicId,
+  alt,
+  opts = {},
+  priority = false,
+  zoomReady = false,
+} = Astro.props;
+const src = cloudinaryUrl(publicId, {
+  ...opts,
+  width: zoomReady ? ZOOM_WIDTH : 1440,
+});
 const srcset = zoomReady ? undefined : cloudinarySrcset(publicId, opts);
 ---
 
@@ -23,9 +37,9 @@ const srcset = zoomReady ? undefined : cloudinarySrcset(publicId, opts);
     srcset={srcset}
     sizes={srcset ? DEFAULT_SIZES : undefined}
     alt={alt}
-    loading={priority ? 'eager' : 'lazy'}
-    decoding={priority ? 'sync' : 'async'}
-    fetchpriority={priority ? 'high' : undefined}
+    loading={priority ? "eager" : "lazy"}
+    decoding={priority ? "sync" : "async"}
+    fetchpriority={priority ? "high" : undefined}
   />
 </div>
 
@@ -46,10 +60,8 @@ const srcset = zoomReady ? undefined : cloudinarySrcset(publicId, opts);
     height: 100%;
     object-fit: contain;
     will-change: transform;
-    transition:
-      transform 1.4s cubic-bezier(0.25, 0.1, 0.25, 1),
-      transform-origin 1.4s cubic-bezier(0.25, 0.1, 0.25, 1),
-      opacity 0.5s ease;
+    transition: transform 1.4s cubic-bezier(0.25, 0.1, 0.25, 1),
+      transform-origin 1.4s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.5s ease;
   }
 
   @media (prefers-reduced-motion: reduce) {
